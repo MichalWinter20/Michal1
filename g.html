@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='utf-8' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js'></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", getEvents);
+
+    //הוספה
+    function addEvents() {
+
+      let data = document.getElementById("task").value;
+      let config = document.getElementById("date").value;
+      axios.post("https://eventsapi.onrender.com/api/Events", {
+        title: data,
+        start: config,
+    }).then((res) => {
+      getEvents()
+        // document.getElementById("addEvent").innerHTML += JSON.stringify(res.data);
+    });
+   
+      
+    }
+
+  // Function to get all events
+  function getEvents() {
+        axios.get("https://eventsapi.onrender.com/api/Events").then((res) => {
+          var calendarEl = document.getElementById("calendar");
+          var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: "dayGridMonth",
+            events: res.data,
+          });
+          calendar.render();
+
+         
+        });
+      }
+
+      function displayEventsList() {
+        document.getElementById("eventList").style.display = "block";
+        let eventListDiv = document.getElementById("eventList");
+        eventListDiv.innerHTML = ""; // Clear the previous list
+
+        axios.get("https://eventsapi.onrender.com/api/Events").then((res) => {
+          let events = res.data;
+          let listHTML = "<ul>";
+          events.forEach((event) => {
+            listHTML += `<li onclick="deleteEvent(${event.id})">${event.title}</li>`;
+          });
+          listHTML += "</ul>";
+
+          eventListDiv.innerHTML = listHTML;
+        });
+      }
+          
+       
+      
+ // Function to add event to delete list
+ function addToDeleteList(eventId) {
+        let deleteListDiv = document.getElementById("deleteList");
+        let listItem = document.createElement("li");
+        listItem.innerText = eventId;
+        listItem.setAttribute("id", `delete-${eventId}`);
+        deleteListDiv.appendChild(listItem);
+      }
+
+      // Function to delete events from the delete list
+      function deleteEvents() {
+        let deleteListDiv = document.getElementById("deleteList");
+        let deleteListItems = deleteListDiv.getElementsByTagName("li");
+
+// Convert the HTMLCollection to an Array
+let deleteItemsArray = Array.from(deleteListItems);
+
+// Extract the event IDs from the list items
+let eventIds = deleteItemsArray.map((item) => item.innerText);
+
+// Send delete requests for each event ID
+eventIds.forEach((eventId) => {
+  axios
+    .delete(`https://eventsapi.onrender.com/api/Events/${eventId}`)
+    .then(() => {
+      // Remove the item from the delete list
+      let listItem = document.getElementById(`delete-${eventId}`);
+      listItem.remove();
+      // Refresh the calendar
+      getEvents();
+    });
+});
+}
+      function closeList()
+      {
+        document.getElementById("eventList").style.display = "none";
+
+
+      }
+    //מחיקה
+    
+
+
+    //put=לעדכן
+
+    // function putEvents() {
+    //   axios.putEvents("https://eventsapi.onrender.com/api/Events").then((post) => {
+    //     console.log('post', post)
+
+    //   });
+    // }
+  </script>
+  
+</head>
+
+<body>
+  <button  style="background-color:yellow ; width: 18rem;" onclick="addEvents()">הוסף ארוע</button>
+  <div>
+
+    <input type="text" name="task" placeholder="Enter task data" required id="task"><br>
+    <input type="date" name="target-date" required id="date"><br>
+
+  </div>
+
+  <div>לחץ על 'קבל רשימת הארועים' ואז לחץ על ארועים  כדי למחוק מהלוח. אחכ לחץ על סגור את רשימת הארועים</div>
+  <button  style="background-color: palevioletred; width: 18rem;" onclick="displayEventsList()">קבל רשימת ארועים</button>
+  <!-- <button onclick="addEvents()">ערוך ארוע</button> -->
+ 
+ 
+
+  <div id="addEvent"></div>
+  <div id="eventList"></div>
+  <!-- <button style="background-color: aqua; width: 18rem;" onclick="deleteEvent(eventId)">מחק </button>  -->
+  <button style="background-color: aqua; width: 18rem;" onclick="closeList()">סגור את רשימת הארועים </button>
+
+  <div id='calendar'></div>
+ 
+</body>
+
+</html>
